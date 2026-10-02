@@ -1,0 +1,101 @@
+name: Skill Verify
+description: Fail CI when an Agent Skill has broken references or unsafe instructions
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  path:
+    description: Skill directory, SKILL.md, or a directory to search
+    required: false
+    default: "."
+  recursive:
+    description: Recursively discover nested SKILL.md files
+    required: false
+    default: "false"
+  fail-on:
+    description: Fail on error, warning, or none
+    required: false
+    default: error
+  format:
+    description: Report format (text, json, or sarif)
+    required: false
+    default: text
+  output:
+    description: Optional report output path
+    required: false
+    default: ""
+  exclude-rule:
+    description: Comma-separated rule ids to suppress
+    required: false
+    default: ""
+  allow-missing:
+    description: Comma-separated glob patterns for generated or runtime files
+    required: false
+    default: ""
+
+outputs:
+  result:
+    description: pass when no finding reaches fail-on
+    value: ${{ steps.verify.outputs.result }}
+  errors:
+    description: Number of error findings
+    value: ${{ steps.verify.outputs.errors }}
+  warnings:
+    description: Number of warning findings
+    value: ${{ steps.verify.outputs.warnings }}
+  failed-skills:
+    description: Number of skills containing error findings
+    value: ${{ steps.verify.outputs.failed-skills }}
+  scanned-skills:
+    description: Number of SKILL.md files scanned
+    value: ${{ steps.verify.outputs.scanned-skills }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify skills
+      id: verify
+      shell: bash
+      env:
+        SV_ACTION_PATH: ${{ github.action_path }}
+        SV_PATH: ${{ inputs.path }}
+        SV_RECURSIVE: ${{ inputs.recursive }}
+        SV_FAIL_ON: ${{ inputs['fail-on'] }}
+        SV_FORMAT: ${{ inputs.format }}
+        SV_OUTPUT: ${{ inputs.output }}
+        SV_EXCLUDE_RULE: ${{ inputs['exclude-rule'] }}
+        SV_ALLOW_MISSING: ${{ inputs['allow-missing'] }}
+      run: |
+        set -eu
+
+        args=("$SV_PATH" --fail-on "$SV_FAIL_ON" --format "$SV_FORMAT")
+
+        if [ "$SV_RECURSIVE" = "true" ]; then
+          args+=(--recursive)
+        fi
+        if [ -n "$SV_OUTPUT" ]; then
+          args+=(--output "$SV_OUTPUT")
+        fi
+        if [ -n "$SV_EXCLUDE_RULE" ]; then
+          IFS=',' read -ra rules <<< "$SV_EXCLUDE_RULE"
+          for rule in "${rules[@]}"; do
+            rule="$(echo "$rule" | xargs)"
+            if [ -n "$rule" ]; then
+              args+=(--exclude-rule "$rule")
+            fi
+          done
+        fi
+        if [ -n "$SV_ALLOW_MISSING" ]; then
+          IFS=',' read -ra missing_patterns <<< "$SV_ALLOW_MISSING"
+          for pattern in "${missing_patterns[@]}"; do
+            pattern="$(echo "$pattern" | xargs)"
+            if [ -n "$pattern" ]; then
+              args+=(--allow-missing "$pattern")
+            fi
+          done
+        fi
+
+        args+=(--github-output "$GITHUB_OUTPUT")
+        python3 "$SV_ACTION_PATH/scripts/skill_verify.py" "${args[@]}"

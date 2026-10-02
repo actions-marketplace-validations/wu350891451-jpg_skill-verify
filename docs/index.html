@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skill Verify - static verifier for Agent Skills</title>
+  <meta name="description" content="Fail CI when an Agent Skill has broken local references, path escapes, hidden Unicode, or high-signal prompt-injection text.">
+  <link rel="canonical" href="https://wu350891451-jpg.github.io/skill-verify/">
+  <style>
+    :root { color-scheme: light; --ink: #17202a; --muted: #5c6670; --line: #d8dee4; --bg: #f6f8fa; --code: #111820; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #fff; font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 920px; margin: 0 auto; padding: 48px 24px 72px; }
+    h1 { margin: 0 0 8px; font-size: 40px; letter-spacing: 0; }
+    h2 { margin: 40px 0 12px; font-size: 24px; letter-spacing: 0; }
+    p { max-width: 720px; }
+    .lede { color: var(--muted); font-size: 19px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+    pre { overflow-x: auto; padding: 18px; color: #f6f8fa; background: var(--code); border-radius: 6px; }
+    pre code { padding: 0; color: inherit; background: none; border: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: var(--bg); }
+    a { color: #0b57d0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .actions a { padding: 9px 13px; color: #fff; background: #17202a; border-radius: 5px; text-decoration: none; }
+    footer { margin-top: 52px; padding-top: 18px; color: var(--muted); border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Skill Verify</h1>
+  <p class="lede">A deterministic gate for <code>SKILL.md</code> files: verify the files a skill claims to ship, reject path escapes, and flag high-signal unsafe instruction text.</p>
+  <div class="actions">
+    <a href="https://github.com/wu350891451-jpg/skill-verify">GitHub repository</a>
+    <a href="https://github.com/marketplace/actions/skill-verify">GitHub Marketplace</a>
+    <a href="guide/">Detailed guide</a>
+  </div>
+
+  <h2>30-second check</h2>
+  <pre><code>git clone https://github.com/wu350891451-jpg/skill-verify.git
+cd skill-verify
+python3 scripts/skill_verify.py demo/good-skill
+python3 scripts/skill_verify.py demo/broken-skill</code></pre>
+  <p>The first command exits 0. The second exits 1 and names the missing local path.</p>
+
+  <h2>What it checks</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Mechanical check</th></tr></thead>
+    <tbody>
+      <tr><td>Structure</td><td>Frontmatter, kebab-case name, directory match, description</td></tr>
+      <tr><td>References</td><td>Markdown links, HTML attributes, scripts, assets, and known local files</td></tr>
+      <tr><td>Containment</td><td>Paths may not escape the skill directory</td></tr>
+      <tr><td>Instruction risk</td><td>Override, disclosure, exfiltration, remote shell, destructive deletion, hidden comments</td></tr>
+      <tr><td>Output</td><td>Text, JSON, and SARIF with stable rule ids</td></tr>
+    </tbody>
+  </table>
+
+  <h2>GitHub Action</h2>
+  <pre><code>- uses: wu350891451-jpg/skill-verify@v0.1.0
+  with:
+    path: skills
+    recursive: "true"</code></pre>
+
+  <h2>Boundary</h2>
+  <p>A pass means the checked files satisfy the current rules. It is not a sandbox, a signature, or a proof that a skill is harmless.</p>
+
+  <footer>MIT licensed. Python 3.8+. No runtime dependencies.</footer>
+</main>
+</body>
+</html>
+

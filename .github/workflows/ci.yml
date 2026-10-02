@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile
+        run: python -m compileall -q src tests scripts
+      - name: Unit tests
+        run: python tests/test_skill_verify.py
+      - name: Good demo passes
+        run: python scripts/skill_verify.py demo/good-skill
+      - name: Broken demo fails
+        run: |
+          if python scripts/skill_verify.py demo/broken-skill; then
+            echo "broken demo unexpectedly passed"
+            exit 1
+          fi
+      - name: SARIF is valid JSON
+        run: |
+          python scripts/skill_verify.py demo/broken-skill --format sarif --output /tmp/skill-verify.sarif || true
+          python -c "import json; json.load(open('/tmp/skill-verify.sarif'))"
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run composite action
+        uses: ./
+        with:
+          path: demo/good-skill
+

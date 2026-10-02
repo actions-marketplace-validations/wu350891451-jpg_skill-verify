@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wu350891451-jpg.github.io/skill-verify/sitemap.xml
+
