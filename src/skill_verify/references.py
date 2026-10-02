@@ -150,21 +150,23 @@ def validate_references(
         except OSError:
             resolved = candidate
 
-        if candidate.is_absolute() or target.startswith("../"):
-            try:
-                resolved.relative_to(resolved_root)
-            except ValueError:
-                findings.append(
-                    Finding(
-                        rule_id="SV012",
-                        severity="error",
-                        line=ref.line,
-                        message="referenced path escapes the skill directory",
-                        evidence=ref.target,
-                        remediation="Keep skill resources inside the skill directory.",
-                    )
+        # Containment is checked for every candidate, not just the shapes that
+        # look like escapes. A target such as `scripts/../../outside.md` starts
+        # with a KNOWN_DIRS prefix, so a prefix test alone would let it through.
+        try:
+            resolved.relative_to(resolved_root)
+        except ValueError:
+            findings.append(
+                Finding(
+                    rule_id="SV012",
+                    severity="error",
+                    line=ref.line,
+                    message="referenced path escapes the skill directory",
+                    evidence=ref.target,
+                    remediation="Keep skill resources inside the skill directory.",
                 )
-                continue
+            )
+            continue
 
         if not resolved.exists():
             if any(fnmatchcase(target, pattern) for pattern in allow_missing):

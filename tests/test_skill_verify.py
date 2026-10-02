@@ -124,6 +124,32 @@ class SkillVerifyTests(unittest.TestCase):
             result = scan_skill(path)
             self.assertIn("SV012", [item.rule_id for item in result.errors])
 
+    def test_known_dir_prefix_escape_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            path = write_skill(
+                base,
+                "nested-escape-skill",
+                "nested-escape-skill",
+                "Read `scripts/../../outside.md`.",
+            )
+            (base / "outside.md").write_text("outside\n", encoding="utf-8")
+            result = scan_skill(path)
+            self.assertIn("SV012", [item.rule_id for item in result.errors])
+
+    def test_allow_missing_does_not_waive_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            path = write_skill(
+                base,
+                "waived-escape-skill",
+                "waived-escape-skill",
+                "Read `scripts/../../outside.md`.",
+            )
+            (base / "outside.md").write_text("outside\n", encoding="utf-8")
+            result = scan_skill(path, allow_missing=("scripts/*", "scripts/../../*.md"))
+            self.assertIn("SV012", [item.rule_id for item in result.errors])
+
     def test_markdown_link_with_spaces_resolves(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = write_skill(

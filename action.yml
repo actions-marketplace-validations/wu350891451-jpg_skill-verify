@@ -81,7 +81,8 @@ runs:
         if [ -n "$SV_EXCLUDE_RULE" ]; then
           IFS=',' read -ra rules <<< "$SV_EXCLUDE_RULE"
           for rule in "${rules[@]}"; do
-            rule="$(echo "$rule" | xargs)"
+            rule="${rule#"${rule%%[![:space:]]*}"}"
+            rule="${rule%"${rule##*[![:space:]]}"}"
             if [ -n "$rule" ]; then
               args+=(--exclude-rule "$rule")
             fi
@@ -90,7 +91,8 @@ runs:
         if [ -n "$SV_ALLOW_MISSING" ]; then
           IFS=',' read -ra missing_patterns <<< "$SV_ALLOW_MISSING"
           for pattern in "${missing_patterns[@]}"; do
-            pattern="$(echo "$pattern" | xargs)"
+            pattern="${pattern#"${pattern%%[![:space:]]*}"}"
+            pattern="${pattern%"${pattern##*[![:space:]]}"}"
             if [ -n "$pattern" ]; then
               args+=(--allow-missing "$pattern")
             fi

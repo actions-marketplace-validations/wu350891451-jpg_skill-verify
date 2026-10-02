@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wu350891451-jpg/skill-verify@v0.1.0
+      - uses: wu350891451-jpg/skill-verify@v0.1.1
         with:
           path: skills
           recursive: "true"
@@ -56,10 +56,17 @@ The action writes `result`, `errors`, `warnings`, `failed-skills`, and
 `scanned-skills` outputs. For a monorepo, use `path: .` and
 `recursive: "true"`.
 
+A release tag is a movable reference. Because this action gates on untrusted
+skill text, pin it to a commit SHA in production:
+
+```yaml
+      - uses: wu350891451-jpg/skill-verify@<commit-sha>  # v0.1.1
+```
+
 For GitHub code scanning, request SARIF:
 
 ```yaml
-      - uses: wu350891451-jpg/skill-verify@v0.1.0
+      - uses: wu350891451-jpg/skill-verify@v0.1.1
         with:
           path: skills
           recursive: "true"
